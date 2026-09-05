@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gauss-Seidel Method Solver</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .section h2 {
+            color: #333;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-size: 0.95em;
+        }
+
+        input[type="number"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
+        .form-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .form-group input {
+            flex: 1;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        }
+
+        .results {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .results h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .result-item strong {
+            color: #667eea;
+        }
+
+        .iterations-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .iterations-table th,
+        .iterations-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .iterations-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .iterations-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #c3e6cb;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔢 Gauss-Seidel Method Solver</h1>
+            <p>Solve systems of linear equations iteratively</p>
+        </div>
+
+        <div class="content">
+            <!-- Input Section -->
+            <div class="section">
+                <h2>📝 Input Matrix</h2>
+                <label>Enter coefficient matrix (A) - comma separated rows, semicolon separated rows:</label>
+                <textarea id="matrixA" placeholder="Example: 10,-1,2; -1,11,-1; 2,-1,10">10,-1,2
+-1,11,-1
+2,-1,10</textarea>
+
+                <label>Enter constant vector (b) - comma or space separated:</label>
+                <textarea id="vectorB" placeholder="Example: 6, 25, -11">6, 25, -11</textarea>
+
+                <h2>⚙️ Parameters</h2>
+                <div class="form-group">
+                    <div>
+                        <label>Initial guess vector (optional, comma separated):</label>
+                        <textarea id="initialGuess" placeholder="Leave empty for zero vector" style="min-height: 50px;"></textarea>
+                    </div>
+                </div>
+
+                <label>Tolerance (convergence criterion):</label>
+                <input type="number" id="tolerance" value="0.0001" step="0.00001" min="0">
+
+                <label>Maximum iterations:</label>
+                <input type="number" id="maxIterations" value="100" step="1" min="1">
+
+                <button onclick="solveSystem()">🚀 Solve System</button>
+                <button class="btn-secondary" onclick="clearAll()">🔄 Clear All</button>
+            </div>
+
+            <!-- Results Section -->
+            <div class="section">
+                <h2>📊 Results</h2>
+                <div id="results"></div>
+            </div>
+
+            <!-- Iterations Table -->
+            <div class="section full-width">
+                <h2>📈 Iteration History</h2>
+                <div id="iterationsTable"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function parseMatrix(input) {
+            return input.trim().split('\n').map(row =>
+                row.split(',').map(val => parseFloat(val.trim()))
+            );
+        }
+
+        function parseVector(input) {
+            return input.trim().split(/[,\s]+/).map(val => parseFloat(val));
+        }
+
+        function gauss_seidel(A, b, x0, tolerance, maxIterations) {
+            const n = A.length;
+            let x = [...x0];
+            const iterations = [];
+
+            for (let k = 0; k < maxIterations; k++) {
+                let xOld = [...x];
+                let maxError = 0;
+
+                for (let i = 0; i < n; i++) {
+                    let sum = 0;
+
+                    // Sum of previous terms (using updated values)
+                    for (let j = 0; j < i; j++) {
+                        sum += A[i][j] * x[j];
+                    }
+
+                    // Sum of remaining terms (using old values)
+                    for (let j = i + 1; j < n; j++) {
+                        sum += A[i][j] * xOld[j];
+                    }
+
+                    x[i] = (b[i] - sum) / A[i][i];
+                    const error = Math.abs(x[i] - xOld[i]);
+                    maxError = Math.max(maxError, error);
+                }
+
+                iterations.push({
+                    iteration: k + 1,
+                    solution: [...x],
+                    error: maxError
+                });
+
+                if (maxError < tolerance) {
+                    return { success: true, solution: x, iterations: iterations, converged: true };
+                }
+            }
+
+            return { success: false, solution: x, iterations: iterations, converged: false };
+        }
+
+        function solveSystem() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            try {
+                // Parse inputs
+                const A = parseMatrix(document.getElementById('matrixA').value);
+                const b = parseVector(document.getElementById('vectorB').value);
+                const tolerance = parseFloat(document.getElementById('tolerance').value);
+                const maxIterations = parseInt(document.getElementById('maxIterations').value);
+
+                // Validation
+                if (A.length === 0 || A[0].length === 0) {
+                    throw new Error('Matrix A is empty');
+                }
+                if (A.length !== A[0].length) {
+                    throw new Error('Matrix A must be square');
+                }
+                if (A.length !== b.length) {
+                    throw new Error('Vector b length must match matrix A rows');
+                }
+
+                // Check diagonal dominance
+                let isDiagonalDominant = true;
+                for (let i = 0; i < A.length; i++) {
+                    let diagAbsVal = Math.abs(A[i][i]);
+                    let sumAbsVal = 0;
+                    for (let j = 0; j < A[i].length; j++) {
+                        if (i !== j) sumAbsVal += Math.abs(A[i][j]);
+                    }
+                    if (diagAbsVal < sumAbsVal) {
+                        isDiagonalDominant = false;
+                        break;
+                    }
+                }
+
+                // Initial guess
+                let x0 = document.getElementById('initialGuess').value.trim() === '' ?
+                    Array(A.length).fill(0) :
+                    parseVector(document.getElementById('initialGuess').value);
+
+                if (x0.length !== A.length) {
+                    throw new Error('Initial guess length must match matrix size');
+                }
+
+                // Solve
+                const result = gauss_seidel(A, b, x0, tolerance, maxIterations);
+
+                // Display results
+                let html = '';
+
+                if (!isDiagonalDominant) {
+                    html += '<div class="error">⚠️ Warning: Matrix may not be diagonally dominant. Convergence not guaranteed.</div>';
+                }
+
+                if (result.converged) {
+                    html += '<div class="success">✓ Solution converged successfully!</div>';
+                } else {
+                    html += '<div class="error">✗ Did not converge within maximum iterations.</div>';
+                }
+
+                html += '<div class="results">';
+                html += '<h3>Solution Vector (x):</h3>';
+                result.solution.forEach((val, idx) => {
+                    html += `<div class="result-item"><strong>x${idx + 1}</strong> = ${val.toFixed(6)}</div>`;
+                });
+
+                html += '<h3>Convergence Information:</h3>';
+                html += `<div class="result-item"><strong>Iterations:</strong> ${result.iterations.length}</div>`;
+                html += `<div class="result-item"><strong>Final Error:</strong> ${result.iterations[result.iterations.length - 1].error.toExponential(6)}</div>`;
+                html += `<div class="result-item"><strong>Tolerance:</strong> ${tolerance.toExponential(6)}</div>`;
+                html += '</div>';
+
+                resultsDiv.innerHTML = html;
+
+                // Display iterations table
+                displayIterationsTable(result.iterations);
+
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function displayIterationsTable(iterations) {
+            const tableDiv = document.getElementById('iterationsTable');
+            if (iterations.length === 0) return;
+
+            const n = iterations[0].solution.length;
+            let html = '<table class="iterations-table"><thead><tr><th>Iteration</th>';
+            
+            for (let i = 0; i < n; i++) {
+                html += `<th>x${i + 1}</th>`;
+            }
+            
+            html += '<th>Error</th></tr></thead><tbody>';
+
+            iterations.forEach(iter => {
+                html += `<tr><td>${iter.iteration}</td>`;
+                iter.solution.forEach(val => {
+                    html += `<td>${val.toFixed(6)}</td>`;
+                });
+                html += `<td>${iter.error.toExponential(4)}</td></tr>`;
+            });
+
+            html += '</tbody></table>';
+            tableDiv.innerHTML = html;
+        }
+
+        function clearAll() {
+            document.getElementById('matrixA').value = '';
+            document.getElementById('vectorB').value = '';
+            document.getElementById('initialGuess').value = '';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('iterationsTable').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
